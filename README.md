@@ -3,6 +3,9 @@
 Spring Boot + MySQL で ECサイトのバックエンド（REST API）を学ぶためのプロジェクトです。
 **ホストにJDKをインストールせず、すべてDockerコンテナ内でビルド・実行します。**
 
+> **APIの実装は入っていません。** コントローラー・サービスは空の雛形になっており、
+> 中身はご自身で実装しながら学ぶ構成です。
+
 ## 構成
 
 | 項目 | 内容 |
@@ -37,31 +40,7 @@ docker compose down
 docker compose down -v
 ```
 
-## API の動作確認
-
-```bash
-# 商品一覧
-curl http://localhost:8080/api/products
-
-# カテゴリで絞り込み
-curl "http://localhost:8080/api/products?categoryId=1"
-
-# 商品詳細
-curl http://localhost:8080/api/products/1
-
-# 存在しないID → 404 のJSONが返る
-curl http://localhost:8080/api/products/9999
-
-# 商品登録
-curl -X POST http://localhost:8080/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"categoryId":1,"name":"実践Spring Boot","description":"応用編","price":3800,"stock":10}'
-
-# 入力値エラー → 400 とフィールドごとのメッセージが返る
-curl -X POST http://localhost:8080/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name":"","price":-1}'
-```
+コードを編集すると DevTools が自動でアプリを再起動します（再ビルド不要）。
 
 ## よく使うコマンド
 
@@ -72,7 +51,7 @@ docker compose exec app ./gradlew test
 # ビルド
 docker compose exec app ./gradlew build
 
-# MySQLに接続
+# MySQLに接続（サンプルデータの確認に）
 docker compose exec db mysql -uecuser -pecpass ecsite
 ```
 
@@ -81,13 +60,14 @@ docker compose exec db mysql -uecuser -pecpass ecsite
 ```
 src/main/java/com/example/ecsite/
 ├── EcSiteApplication.java   起動クラス
-├── config/                  設定（SecurityConfig）
-├── controller/              REST APIの入口（@RestController）
-├── service/                 業務ロジック（トランザクション境界）
-├── repository/              DBアクセス（Spring Data JPA）
-├── domain/                  エンティティ（DBのテーブルに対応）
-├── dto/                     APIの入出力用オブジェクト
-└── exception/               例外と共通エラーハンドラ
+├── config/
+│   └── SecurityConfig.java  /api/** を認証なしで公開する設定
+├── controller/
+│   └── ProductController.java  空の雛形（@RestController + DIのみ）
+├── service/
+│   └── ProductService.java     空の雛形（@Service + DIのみ）
+├── repository/              6つのリポジトリ（JpaRepositoryを継承しただけの空インタフェース）
+└── domain/                  エンティティ（DBのテーブルに対応）
 
 src/main/resources/
 ├── application.yml          アプリ設定
@@ -95,26 +75,41 @@ src/main/resources/
     └── V1__init.sql         テーブル定義＋サンプルデータ
 ```
 
+DTO・例外ハンドラのパッケージは用意していません。必要になった時点で
+`dto/`・`exception/` などをご自身で作成してください。
+
 ## データモデル
 
 | テーブル | 内容 |
 |---|---|
-| `categories` | 商品カテゴリ |
-| `products` | 商品（カテゴリに属する） |
-| `users` | 会員 |
+| `categories` | 商品カテゴリ（サンプル: 本 / 家電 / 食品） |
+| `products` | 商品（サンプル6件。カテゴリに属する） |
+| `users` | 会員（サンプル1件） |
 | `cart_items` | カート（会員×商品×数量） |
 | `orders` | 注文 |
 | `order_items` | 注文明細（注文時点の単価を保持） |
 
 ## 学習の進め方（おすすめ順）
 
-1. `ProductController` → `ProductService` → `ProductRepository` の流れを追い、リクエストがDBに届くまでを理解する
-2. カテゴリAPI（`/api/categories`）を自分で追加してみる（Controller/Service/DTOを写経）
-3. 商品の更新（`PUT`）・削除（`DELETE`）を追加する
-4. カートAPI（追加・一覧・削除）を実装する
-5. 注文API（カートから注文を確定し、在庫を減らす）を実装する。ここでトランザクションの重要性を学べる
-6. `SecurityConfig` を編集して会員登録・ログイン（JWT等）を導入し、`permitAll()` を `authenticated()` に変更する
-7. `ProductControllerTest` などのテストを書く
+1. **商品一覧API** `GET /api/products` を実装する
+   - `ProductRepository` に `findAll()` は既にあるので、`ProductService` にメソッドを追加し、`ProductController` から呼ぶ
+   - まずはエンティティをそのまま返し、次にレスポンス用のDTOを作って詰め替える
+2. **商品詳細API** `GET /api/products/{id}` を実装する（`@PathVariable`、`Optional` の扱い）
+3. **商品登録API** `POST /api/products` を実装する（`@RequestBody`、`@Valid` による入力検証）
+4. **例外処理** `@RestControllerAdvice` を作り、404や400をJSONで返す
+5. **検索** `findByCategoryId` のような**クエリメソッド**をリポジトリに追加する
+6. **カートAPI**（追加・一覧・削除）を実装する
+7. **注文API**（カートから注文を確定し在庫を減らす）を実装する。トランザクションの重要性を学べる
+8. **認証** `SecurityConfig` を編集し、会員登録・ログインを導入する
+9. **テスト** `@SpringBootTest` / `@WebMvcTest` でテストを書く
+
+### 動作確認の例
+
+```bash
+# 実装後、こういったコマンドで確認できます
+curl http://localhost:8080/api/products
+curl http://localhost:8080/api/products/1
+```
 
 ## 注意事項
 
