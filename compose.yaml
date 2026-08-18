@@ -1,0 +1,56 @@
+services:
+  # ---------------------------------------------
+  # MySQL（データベース）
+  # ---------------------------------------------
+  db:
+    image: mysql:8.4
+    container_name: ec-site-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ecsite
+      MYSQL_USER: ecuser
+      MYSQL_PASSWORD: ecpass
+      TZ: Asia/Tokyo
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      # ホストのDBクライアント（DBeaver等）から接続する用
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-prootpass']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # ---------------------------------------------
+  # Spring Boot アプリ（ホストにJDKを入れずコンテナ内でビルド・実行）
+  # ---------------------------------------------
+  app:
+    image: eclipse-temurin:21-jdk
+    container_name: ec-site-app
+    working_dir: /workspace
+    command: ['./gradlew', 'bootRun', '--no-daemon']
+    environment:
+      DB_HOST: db
+      DB_PORT: '3306'
+      DB_NAME: ecsite
+      DB_USER: ecuser
+      DB_PASSWORD: ecpass
+      GRADLE_USER_HOME: /workspace/.gradle-home
+      TZ: Asia/Tokyo
+    volumes:
+      - ./:/workspace
+      - gradle-cache:/workspace/.gradle-home
+    ports:
+      - '8080:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  gradle-cache:

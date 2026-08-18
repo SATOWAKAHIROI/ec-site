@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: ec-site
+
+  # Dockerコンテナ内から起動する前提。ホストから直接起動する場合は DB_HOST=localhost を指定する
+  datasource:
+    url: jdbc:mysql://${DB_HOST:db}:${DB_PORT:3306}/${DB_NAME:ecsite}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo
+    username: ${DB_USER:ecuser}
+    password: ${DB_PASSWORD:ecpass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      # テーブルはFlywayで管理するため、エンティティとの整合性チェックのみ行う
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # compose.yaml はこちらで起動するため、Spring側の自動起動は無効にする
+  docker:
+    compose:
+      enabled: false
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.example.ecsite: debug
+    org.hibernate.orm.jdbc.bind: trace
