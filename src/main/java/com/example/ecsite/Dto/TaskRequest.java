@@ -1,9 +1,12 @@
 package com.example.ecsite.Dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-public record TaskRequest (
-    String title,
-    boolean completed
-) {
+public record TaskRequest(
+        @NotBlank(message = "タイトルは必須です") @Size(max = 100, message = "タイトルは100文字以内で入力してください") String title,
+
+        @NotNull(message = "完了状態は必須です") Boolean completed) {
 
 }
