@@ -27,7 +27,8 @@ public class AuthService {
                 .orElseThrow(() -> new UserNotFoundException("user not find"));
         String loginPassword = loginRequest.password();
 
-        System.out.println("encoded: " + passwordEncoder.encode("password"));
+        System.out.println("user found: " + user.getEmail());
+        System.out.println("password matches: " + passwordEncoder.matches(loginRequest.password(), user.getPassword()));
 
         if (!passwordEncoder.matches(loginPassword, user.getPassword())) {
             throw new RuntimeException("Password is incorrect");
