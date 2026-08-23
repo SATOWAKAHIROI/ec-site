@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,16 +30,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/tasks/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                        .exceptionHandling(exception -> exception
-                            .authenticationEntryPoint(
-                                (request, response, authException) ->
-                                    response.sendError(
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> response.sendError(
                                         HttpServletResponse.SC_UNAUTHORIZED,
-                                        "Unauthorized"
-                                    )       
-                            )
-                        )
+                                        "Unauthorized"))
+                        .accessDeniedHandler(
+                                (request, response, accessDeniedException) -> response.sendError(
+                                        HttpServletResponse.SC_FORBIDDEN, "Forbidden")))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

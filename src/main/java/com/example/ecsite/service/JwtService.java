@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.springframework.stereotype.Service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -22,14 +23,23 @@ public class JwtService {
                 .compact();
     }
 
-    public Long extractUserId(String token){
-        String subject = Jwts.parser()
+    public Long extractUserId(String token) {
+        String subject = extractAll(token).getSubject();
+
+        return Long.valueOf(subject);
+    }
+
+    public String extractRole(String token) {
+        String role = extractAll(token).get("role", String.class);
+
+        return role;
+    }
+
+    private Claims extractAll(String token) {
+        return Jwts.parser()
                 .verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-
-        return Long.valueOf(subject);
+                .getPayload();
     }
 }

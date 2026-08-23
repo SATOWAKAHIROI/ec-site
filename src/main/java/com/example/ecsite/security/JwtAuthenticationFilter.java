@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,17 +26,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        FilterChain filterChain
-    )
-    throws ServletException, IOException{
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        
-        System.out.println("Request URI = " + request.getRequestURI());
-        System.out.println("Authorization = " + authHeader);
 
-        if(authHeader == null || !authHeader.startsWith("Bearer ")){
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -43,10 +40,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         Long userId = jwtService.extractUserId(token);
+        String role = jwtService.extractRole(token);
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userId, null, List.of());
+        System.out.println("Authorization = " + authHeader);
+        System.out.println("userId = " + userId);
+        System.out.println("role = " + role);
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userId, null,
+                List.of(authority));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        System.out.println(
+                "authenticated = " +
+                        SecurityContextHolder.getContext()
+                                .getAuthentication()
+                                .isAuthenticated());
+
+        System.out.println(
+                "authorities = " +
+                        SecurityContextHolder.getContext()
+                                .getAuthentication()
+                                .getAuthorities());
 
         filterChain.doFilter(request, response);
 
