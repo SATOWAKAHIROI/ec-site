@@ -34,12 +34,27 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(
-                                (request, response, authException) -> response.sendError(
-                                        HttpServletResponse.SC_UNAUTHORIZED,
-                                        "Unauthorized"))
+                                (request, response, authException) -> {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    response.setContentType("application/json");
+                                    response.getWriter().write("""
+                                            {
+                                                "status": 401,
+                                                "message": "Unauthorized"
+                                            }
+                                            """);
+                                })
                         .accessDeniedHandler(
-                                (request, response, accessDeniedException) -> response.sendError(
-                                        HttpServletResponse.SC_FORBIDDEN, "Forbidden")))
+                                (request, response, accessDeniedException) -> {
+                                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                    response.setContentType("application/json");
+                                    response.getWriter().write("""
+                                            {
+                                                "status": 403,
+                                                "message": "Forbidden"
+                                            }
+                                            """);
+                                }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
