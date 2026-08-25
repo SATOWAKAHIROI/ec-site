@@ -2,6 +2,9 @@ package com.example.ecsite.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,8 +45,10 @@ public class TaskController {
 	}
 
 	@PostMapping
-	public TaskResponse createTask(@RequestBody @Valid TaskRequest taskRequest) {
-		return taskService.createTask(taskRequest);
+	public ResponseEntity<TaskResponse> createTask(@RequestBody @Valid TaskRequest taskRequest) {
+		TaskResponse response = taskService.createTask(taskRequest);
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PutMapping("/{id}")
@@ -52,8 +57,14 @@ public class TaskController {
 	}
 
 	@DeleteMapping("/{id}")
-	public void deleteTask(@PathVariable Long id) {
+	public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
 		taskService.deleteTask(id);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
+
+	@GetMapping("/me")
+	public Long getCurrentuser(Authentication authentication) {
+		return (Long) authentication.getPrincipal();
 	}
 
 }
