@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ecsite.Dto.TaskRequest;
 import com.example.ecsite.Dto.TaskResponse;
+import com.example.ecsite.security.LoginUser;
 import com.example.ecsite.service.TaskService;
 
 import jakarta.validation.Valid;
@@ -35,36 +36,35 @@ public class TaskController {
 	// ここにエンドポイントを実装する
 	@GetMapping
 	public List<TaskResponse> getAllTasks(@RequestParam(required = false) String keyword,
-			@RequestParam(required = false) Boolean isCompleted) {
-		return taskService.getTasks(keyword, isCompleted);
+			@RequestParam(required = false) Boolean isCompleted, @AuthenticationPrincipal LoginUser loginUser) {
+		Long userId = loginUser.userId();
+		return taskService.getTasks(keyword, isCompleted, userId);
 	}
 
 	@GetMapping("/{id}")
-	public TaskResponse getTaskById(@PathVariable Long id) {
-		return taskService.getTaskById(id);
+	public TaskResponse getTaskById(@PathVariable Long id, @AuthenticationPrincipal LoginUser loginUser) {
+		Long userId = loginUser.userId();
+		return taskService.getTaskByIdAndUserId(id, userId);
 	}
 
 	@PostMapping
-	public ResponseEntity<TaskResponse> createTask(@RequestBody @Valid TaskRequest taskRequest) {
-		TaskResponse response = taskService.createTask(taskRequest);
+	public ResponseEntity<TaskResponse> createTask(@RequestBody @Valid TaskRequest taskRequest, @AuthenticationPrincipal LoginUser loginUser) {
+		Long userId = loginUser.userId();
+		TaskResponse response = taskService.createTask(taskRequest, userId);
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PutMapping("/{id}")
-	public TaskResponse updateTask(@PathVariable Long id, @RequestBody @Valid TaskRequest taskRequest) {
-		return taskService.updateTask(id, taskRequest);
+	public TaskResponse updateTask(@PathVariable Long id, @RequestBody @Valid TaskRequest taskRequest, @AuthenticationPrincipal LoginUser loginUser) {
+		Long userId = loginUser.userId();
+		return taskService.updateTask(id, taskRequest, userId);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-		taskService.deleteTask(id);
+	public ResponseEntity<Void> deleteTask(@PathVariable Long id, @AuthenticationPrincipal LoginUser loginUser) {
+		Long userId = loginUser.userId();
+		taskService.deleteTask(id, userId);
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
-
-	@GetMapping("/me")
-	public Long getCurrentuser(Authentication authentication) {
-		return (Long) authentication.getPrincipal();
-	}
-
 }

@@ -35,6 +35,11 @@ public class JwtService {
         return role;
     }
 
+    public String extractEmail(String token){
+        String email = extractAll(token).get("email", String.class);
+        return email;
+    }
+
     private Claims extractAll(String token) {
         return Jwts.parser()
                 .verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes()))

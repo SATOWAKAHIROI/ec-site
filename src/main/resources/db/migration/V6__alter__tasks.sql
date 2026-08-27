@@ -1,0 +1,6 @@
+ALTER TABLE tasks ADD COLUMN user_id BIGINT NULL;
+
+UPDATE tasks SET user_id = 1 WHERE user_id IS NULL;
+
+ALTER TABLE tasks MODIFY COLUMN user_id BIGINT NOT NULL;
+ALTER TABLE tasks ADD CONSTRAINT fk_tasks_user FOREIGN KEY (user_id) REFERENCES users (id);
