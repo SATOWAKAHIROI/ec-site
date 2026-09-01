@@ -35,14 +35,14 @@ public class TaskController {
 
 	// ここにエンドポイントを実装する
 	@GetMapping
-	public List<TaskResponse> getAllTasks(@RequestParam(required = false) String keyword,
-			@RequestParam(required = false) Boolean isCompleted, @AuthenticationPrincipal LoginUser loginUser) {
+	public List<TaskResponse> getAllTasks(@RequestParam(name = "keyword" ,required = false) String keyword,
+			@RequestParam(name = "isCompleted", required = false) Boolean isCompleted, @AuthenticationPrincipal LoginUser loginUser) {
 		Long userId = loginUser.userId();
 		return taskService.getTasks(keyword, isCompleted, userId);
 	}
 
 	@GetMapping("/{id}")
-	public TaskResponse getTaskById(@PathVariable Long id, @AuthenticationPrincipal LoginUser loginUser) {
+	public TaskResponse getTaskById(@PathVariable("id") Long id, @AuthenticationPrincipal LoginUser loginUser) {
 		Long userId = loginUser.userId();
 		return taskService.getTaskByIdAndUserId(id, userId);
 	}
@@ -56,13 +56,13 @@ public class TaskController {
 	}
 
 	@PutMapping("/{id}")
-	public TaskResponse updateTask(@PathVariable Long id, @RequestBody @Valid TaskRequest taskRequest, @AuthenticationPrincipal LoginUser loginUser) {
+	public TaskResponse updateTask(@PathVariable("id") Long id, @RequestBody @Valid TaskRequest taskRequest, @AuthenticationPrincipal LoginUser loginUser) {
 		Long userId = loginUser.userId();
 		return taskService.updateTask(id, taskRequest, userId);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteTask(@PathVariable Long id, @AuthenticationPrincipal LoginUser loginUser) {
+	public ResponseEntity<Void> deleteTask(@PathVariable("id") Long id, @AuthenticationPrincipal LoginUser loginUser) {
 		Long userId = loginUser.userId();
 		taskService.deleteTask(id, userId);
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
