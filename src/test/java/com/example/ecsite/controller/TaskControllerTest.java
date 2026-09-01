@@ -102,4 +102,21 @@ public class TaskControllerTest {
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message", is("Task not Found")));
     }
+
+    @Test
+    void 予期しないエラー発生確認() throws Exception{
+        LoginUser loginUser = new LoginUser(
+            1L,
+            "yamada@example.com",
+            "USER"
+        );
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(loginUser, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        
+        when(taskService.getTaskByIdAndUserId(999L, 1L)).thenThrow(new RuntimeException("Unexpected Error"));
+
+        mockMvc.perform(get("/api/tasks/999").with(authentication(authentication)))
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.message", is("Internal server Error")));
+    }
 }
