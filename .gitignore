@@ -38,3 +38,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Next.js（frontend）
+frontend/node_modules/
+frontend/.next/
+frontend/out/
